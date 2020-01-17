@@ -1,6 +1,5 @@
 ---
 # output: github_document
-
 output: 
   pdf_document:
     keep_tex: true
@@ -15,7 +14,7 @@ author:
 - name: Massiel Suero
   affiliation: Estudiante de la Maestría en Teledetección y Ciencias de la Información Geográfica, Universidad Autónoma de Santo Domingo (UASD)
   
-abstract: "Este proyecto se desarrolla dentro del marco de la Materia Análisis Espacial de la Maestría en Teledetección y Ciencias de la Información Geográfica, en la Universidad Autónoma de Santo Domingo (UASD). Los datos que son utilizados para el estudio, corresponden a los resultados del IX Censo Nacional de Población y Vivienda, 2010. Extrayendo de estos datos los correspondientes a personas con discapacidad, se trata de establecer el grado de aglomeración de las personas con esta condición en el espacio de la República Dominicana. Luego, a través de la modelización de la información, se pretende establecer si la cantidad de personas con discapacidad se encuentra relacionada a los distintos tipos de contaminacion a los que se encuentran expuetas las viviendas en el país. Al finalizar, como un estudio separado, se presenta el análisis geoestadístico de los datos de las precipitaciones ocurridas sobre el territorio nacional en el año 1984."
+abstract: "Este proyecto se desarrolla dentro del marco de la Materia Análisis Espacial de la Maestría en Teledetección y Ciencias de la Información Geográfica, en la Universidad Autónoma de Santo Domingo (UASD). Los datos que son utilizados para el estudio, corresponden a los resultados del IX Censo Nacional de Población y Vivienda, 2010.Extrayendo de estos datos los correspondientes a discapacidad y contaminación,se utilizan los mismos para tratar de establecer el grado de aglomeración de las personas con discapacidad en el espacio de la República Dominicana. Luego, a través de la modelización de la información, se intenta establecer si la cantidad de personas con discapacidad se encuentra relacionada con los datos de contaminación. Al finalizar, se realiza el análisis geoestadístico de los datos de las precipitaciones ocurridas sobre el territorio nacional en el año 1984."
 
 keywords: "Discapacidad, Contaminación, Vivienda, República Dominicana, Censo, Hot Spot, Correlación"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
@@ -33,6 +32,15 @@ header-includes:
 editor_options: 
   chunk_output_type: console
 ---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  collapse=TRUE,
+  out.width='100%',
+  fig.path = "img/",
+  eval = T
+)
+```
 
 # Introducción
 
@@ -82,46 +90,48 @@ Para tratar de identificar estructuras de concentración o dispersión el primer
 
 Se obtuvieron los siguientes resultados:
 
-```{r, echo = FALSE}
+````{r, echo = FALSE}
 summary(miobj.nb)
-```
+````
 
-A continuación el grafo que muestra los datos:
+A continuación el grafo que muestra los resultados:
 
-```{r, echo = FALSE}
+````{r, echo = FALSE}
 coords <- coordinates(as((miobj), 'Spatial'))
 plot(miobj.sp, border="blue", lwd=0.5)
 plot.nb(miobj.nb,coords, add = T)
-```
+````
 
-Luego se asignan los pesos a cada relación vecina, lo que permitirá definir la fuerza de esta relación en base a cercanía, obteniendo los siguientes datos:
+Luego se asignan los pesos a cada relación vecina, lo que permitirá definir la fuerza de esta relación en base a cercanía. Se obtuvieron los siguientes datos:
 
 Estilo Weighted:
-```{r, echo = FALSE }
+````{r, echo = FALSE }
 miobj.w.W <- nb2listw(miobj.nb)
 miobj.w.W
 ```
 
 Estilo Binario:
-```{r, echo = FALSE}
+````{r, echo = FALSE}
 miobj.w.B <- nb2listw(miobj.nb, style = 'B')
 miobj.w.B
 ```
 
-Para evaluar la correlación se utilizó el índice I de Moran cuyos resultados nos indican que existe correlación positiva, con una expectativa de relación negativa.
+Para evaluar la correlación se utilizó el índice I de Moran, obteniendo los siguientes resultados:
 
-```{r, echo = FALSE}
+````{r, echo = FALSE}
 moran.test(miobj$DISC_PCT, listw = miobj.w.W)
 ```
 
+En el caso del test de la I de Moran global, el resultado nos muestra que existe correlación positiva, con una expectativa de relación negativa.
+
 En el gráfico de Moran podemos obervar los porcentajes de personas con discapacidad, contra el valor esperado de los mismos con relación a su ubicación espacial, obteniendo los datos de los municipios donde el porcentaje no se relaciona con sus vecinos. 
 
-```{r, echo = FALSE}
+````{r, echo = FALSE}
 moran.plot(miobj$DISC_PCT, listw = miobj.w.W)
 ```
 
-Para obtener el mapa que nos entregue información sobre los patrones geográficos de autocorrelación espacial, realizamos un mapa LISA (Local indicator of spatial asociation), donde podemos visualizar los clusters de personas con discapacidad en la República Dominicana. 
-Al mismo tiempo, identifica los municipios donde la medición de la variable corresponde a valores inferiores al promedio, rodeados por municipios vecinos que también se encuentran bajo la media en relación al porcentaje de discapacidad (cold spots). 
+Para obtener el mapa que nos entregue información sobre los patrones geográficos de autocorrelación espacial, necesitamos realizar un mapa LISA (Local indicator of spatial asociation), este mapa nos entrega los clusters de personas con discapacidad en la República Dominicana. 
+Al mismo tiempo, identifica los municipios donde la medición de la variable corresponde a valores inferiores al promedio, rodeados por municipios vecinos que también se encuentran bajo la media en relación al porcentaje de discapacidad (cold spot). 
 
 ```{r, include= FALSE}
 DISC_lmoran <- localmoran(miobj$DISC, listw = miobj.w.W)
@@ -250,11 +260,11 @@ sar2 <- seleccionadas_PCT_LOG %>% select(contains('_PCT_LOG')) %>%
 summary(sar2)
 ```
 
-Los coeficientes de regresión son 0.707 y 0.043. Podemos decir que 0.707 es el valor medio de la variable discapacidad cuando las variables predictoras son cero. Mientras que 0.043, es el efecto medio sobre la variable discapacidad al aumentar en una unidad el valor de las variables de contaminación. 
+Los coeficientes de regresión son 0.707 y 0.043.Podemos decir que 0.707 es el valor medio de la variable discapacidad cuando las variables predictoras son cero. Mientras que 0.043, es el efecto medio sobre la variable discapacidad al aumentar en una unidad el valor de las variables de contaminación. 
 
-Existe una relación lineal positiva entre las variables, cuando aumentan en una unidad las variables de contaminación, la discapacidad aumenta en 0.043 unidades.
+Existe una relación lineal positiva entre las variables, cuando aumenta en una unidad las variables de contaminación, la discapacidad aumenta en 0.043 unidades.
 
-Para finalizar se muestran los resultados del análisis geoestadístico en un mapa donde se puede visualizar la cantidad de precipitaciones en el país durante al año 1984:
+Con relación al análisis geoestadístico a continuación presentamos el mapa que muestra la cantidad de precipitaciones en el pas durante al año 1984:
 
 ```{r, include= FALSE}
 rutapre <- 'DATA/onamet_prec_anual_sf.gpkg'
@@ -616,3 +626,8 @@ ggplot() +
 # Referencias
 
 https://censo2010.one.gob.do/
+
+```{r}
+tinytex::reinstall_tinytex()
+tinytex::tinytex_root()
+```
